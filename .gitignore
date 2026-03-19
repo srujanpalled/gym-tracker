@@ -33,3 +33,12 @@ prebuilds/
 !admin/
 !client/assets/
 !admin/assets/
+
+# Capacitor & Mobile
+gym_tracker/android/app/build/
+gym_tracker/android/.gradle/
+gym_tracker/ios/App/public/
+gym_tracker/ios/App/build/
+
+# Desktop & Build Artifacts
+gym_tracker/dist_electron/
