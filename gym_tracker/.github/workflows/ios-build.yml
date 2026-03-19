@@ -1,0 +1,59 @@
+name: Build iOS IPA
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build iOS
+    runs-on: macos-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: gym-management-/gym_tracker/package-lock.json
+
+      - name: Install Dependencies
+        working-directory: gym-management-/gym_tracker
+        run: npm install
+
+      - name: Build Web App
+        working-directory: gym-management-/gym_tracker
+        run: npm run build
+
+      - name: Sync Capacitor iOS
+        working-directory: gym-management-/gym_tracker
+        run: |
+          npx cap add ios
+          npx cap sync ios
+
+      - name: Build Xcode Project (Unsigned)
+        working-directory: gym-management-/gym_tracker/ios/App
+        run: |
+          xcodebuild build \
+            -workspace App.xcworkspace \
+            -scheme App \
+            -sdk iphoneos \
+            -configuration Release \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Zip .app into .ipa
+        working-directory: gym-management-/gym_tracker/ios/App
+        run: |
+          mkdir -p Payload
+          mv build/Release-iphoneos/App.app Payload/
+          zip -r "Gym Tracker.ipa" Payload
+          mv "Gym Tracker.ipa" ../../../
+
+      - name: Upload IPA Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: gym-tracker-ipa
+          path: gym-management-/gym_tracker/Gym Tracker.ipa
